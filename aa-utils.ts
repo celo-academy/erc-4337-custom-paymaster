@@ -68,7 +68,7 @@ export function packUserOp(op: NotPromise<UserOperationStruct>): string {
     let packedUserOp = hexDataSlice(
         hexlify(packedUserOpWithDummyPNDAndSignature),
         0,
-        packedUserOpWithDummyPNDAndSignature.length / 2 - 321 // 321 - is the number of bytes paymasterAndData and signature combined
+        packedUserOpWithDummyPNDAndSignature.length / 2 - 321 // 321 - is the number of bytes paymasterAndData and signature combined (along with their lengths)
     );
 
     return packedUserOp;
