@@ -1,39 +1,61 @@
-## Usage
+# Allowlist Paymaster using ThirdWeb SDK
 
-Install dependencies:
+This is the implementation of Allowlist Paymaster, a paymaster tha allows a list of `UserOperation` senders to be sponsored by the paymaster
+
+## Table of Contents
+
+-   [Installation](#installation)
+-   [Usage](#usage)
+-   [Features](#features)
+-   [Contributing](#contributing)
+-   [License](#license)
+
+## Installation
+
+```bash
+git clone https://github.com/celo-academy/erc-4337-custom-paymaster.git
+```
 
 ```bash
 yarn install
 ```
 
-Run the project:
+## Usage
+
+### Step 1: Deploy the AllowlistPaymaster
+
+-   Create a `.env` file and copy the contents of `.env.example` into it
+-   Get the Private Key of the owner of the Paymaster and place it in the `.env` file
+-   Open the file `scripts/deploy.js`, Entrypoint are frequently upgraded make sure the variable `ENTRYPOINT_ADDRESS` has the correct value
+-   Run the deploy script to deploy the paymaster using the following command
+
+```bash
+npx hardhat run scripts/deploy.js --network alfajores
+```
+
+-   Copy the paymaster address that you get in the terminal, this is the value for `ALLOWLIST_PAYMASTER_ADDRESS`
+-   Get `THIRDWEB_API_KEY` from the [ThirdWeb](https://thirdweb.com/settings) Dashboard
+-   Place the key in `.env` file
+-   Replace variables `PAYMASTER_OWNER` (this is the public key corresponding the private key of the paymaster owner), and `ALLOWLIST_PAYMASTER_ADDRESS` with the values you have
+
+To run the transaction script and perform a UserOperation use the following command
 
 ```bash
 yarn dev
 ```
 
-## Configuration
+Optional:
 
-The script runs on goerli by default, but requires a thirdweb API key.
+You can verify the paymaster by using your Celoscan key in `.env` file and use the following command
 
-paste your api key in your .env file:
-
-```.env
-THIRDWEB_API_KEY={{your_api_key}}
+```bash
+npx hardhat verify [PAYMASTER_ADDRESS] [ENTRYPOINT_ADDRESS] [PAYMASTER_OWNER_ADDRESS] --network alfajores
 ```
 
-## Chains
+## Features
 
-The script runs on goerli by default, you can change it in `index.ts`
+-   Customize the `allowList` in `index.js` to allow sponsorship of smart accounts by the paymaster
 
-```ts
-const chain = Goerli; // can also be: Mumbai, BaseGoerli, OptimismGoerli...
-```
+### Doubts?
 
-## Contracts
-
-The script has default factories out of the box for testnets, but you can deploy your own on the [thirdweb dashboard](https://thirdweb.com/explore). You can also bring your own 4337 compatible factory, and adjust the the SDK to the specifics of the contract.
-
-## Documentation
-
-Full documentation at: [https://portal.thirdweb.com/wallet/smart-wallet](https://portal.thirdweb.com/wallet/smart-wallet)
+Join Office Hours in [Celo](https://discord.com/invite/celo) discord
