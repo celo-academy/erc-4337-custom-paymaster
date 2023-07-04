@@ -7,11 +7,12 @@
 const hre = require("hardhat");
 
 async function main() {
-    const Paymaster = await hre.ethers.getContractFactory("VerifyingPaymaster");
+    const Paymaster = await hre.ethers.getContractFactory("AllowlistPaymaster");
     const [deployer] = await hre.ethers.getSigners();
+    const ENTRYPONT_ADDRESS = "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789";
     const paymaster = await Paymaster.deploy(
-        "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
-        deployer.address
+        ENTRYPONT_ADDRESS,
+        deployer.address // Address of the owner of the paymaster
     );
 
     await paymaster.deployed();
