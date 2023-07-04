@@ -105,7 +105,7 @@ class AllowlistPaymaster extends PaymasterAPI {
         }
 
         // If the sender is not part of the list return nothing
-        return "";
+        throw new Error("Sender not allowlisted");
     }
 }
 // Put your chain here
