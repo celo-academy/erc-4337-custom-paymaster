@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { config } from "dotenv";
 import { ThirdwebSDK } from "@thirdweb-dev/sdk";
-import { defaultAbiCoder } from "ethers/lib/utils";
+import { BytesLike, defaultAbiCoder, hexConcat } from "ethers/lib/utils";
 import {
     SmartWallet,
     SmartWalletConfig,
@@ -12,16 +11,19 @@ import { UserOperationStruct } from "@account-abstraction/contracts";
 import { LocalWalletNode } from "@thirdweb-dev/wallets/evm/wallets/local-wallet-node";
 import { CeloAlfajoresTestnet } from "@thirdweb-dev/chains";
 import { claimCeloToken } from "./sdk-calls";
-import { signUserOp } from "./aa-utils";
+import { NotPromise, signUserOp } from "./aa-utils";
 
+// Environment Variables
 config();
 
-const ENTRYPOINT = "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789";
+// Address whose signature is required for the UserOperations to be sponsored by the specified Paymaster
+const PAYMASTER_OWNER = "0xf672cd5Ee805B72804bEE9a40BA7b8dc8F573596";
 
+// Address of the paymaster
 const ALLOWLIST_PAYMASTER_ADDRESS =
     "0x34A00151460C7Bec401D3b24fE86E9C152EE8284";
 
-// Only the following UserOperation sender will be allowed
+// Only the following UserOperation senders will be allowed
 const allowList = ["0xdA82D492a49d08cF732A47Acf34efb51BE351dd6"];
 
 class AllowlistPaymaster extends PaymasterAPI {
@@ -32,30 +34,58 @@ class AllowlistPaymaster extends PaymasterAPI {
         this.allowlist = allowlist;
     }
 
+    /**
+     * This function should return the `paymasterAndData` component of the UserOperation which will be then validated by the on-chain paymaster contract
+     *
+     * Any arbitrary logic can be defined here ultimately the return value should be the value that will lead to successful validation on-chain by `validatePaymasterUserOp` function on the paymaster
+     *
+     * The standard (ERC-4337) structure of paymasterAndData is
+     *
+     * [PAYMASTER_ADDRESS (20 bytes)][VALID_UNTIL (uint48 but encoded so 32 bytes)][VALID_AFTER (uint48 but encoded so 32 bytes)][SIGNATURE (bytes)]
+     */
     async getPaymasterAndData(
         userOp: Partial<UserOperationStruct>
     ): Promise<string> {
-        // Ask the paymaster to sign the transaction and return a valid paymasterAndData value.
-        if (allowList.indexOf(userOp.sender as string) != -1) {
-            let signer = new PrivateKeyWallet(process.env.SIGNER_KEY as string);
-            let validUntil = Date.now() / 1000 + 10 * 60;
-            let signature = signUserOp(
-                userOp,
-                signer,
-                ENTRYPOINT,
-                44787,
-                0,
-                validUntil,
-                0
+        // Check if the UserOperation sender is part of the allowList
+        if (this.allowlist.indexOf(userOp.sender as string) != -1) {
+            // The Paymaster Owner in the form of Wallet
+            let wallet = new PrivateKeyWallet(
+                process.env.PAYMASTER_SIGNER_KEY as string
             );
 
-            let paymasterAndData = defaultAbiCoder.encode(
-                ["address", "uint48", "uint48", "bytes"],
-                [ALLOWLIST_PAYMASTER_ADDRESS, validUntil, 0, signature]
+            // A timestamp in UNIX until which the paymaster sponsorship is valid
+            let validUntil = Math.round(Date.now() / 1000) + 10 * 60;
+
+            /**
+             * UserOperation signed by Paymaster Owner
+             *
+             * The current state of UserOperation doesn't have paymasterAndData and a signature so we have Dummy values for those
+             *
+             */
+            let { signature } = signUserOp(
+                userOp as NotPromise<UserOperationStruct>,
+                await wallet.getSigner(), // The paymaster owner in the form of Signer
+                CeloAlfajoresTestnet.chainId,
+                ALLOWLIST_PAYMASTER_ADDRESS,
+                // TODO: get nonce from the paymaster
+                3, // senderNonce (this nonce is subjective to every paymaster and sender)
+                validUntil,
+                0 // validAfter - Timestamp after which the UserOperation sponsorship should be valid
             );
+
+            /**
+             * Concatenating all the paymasterAndData components
+             */
+            let paymasterAndData = hexConcat([
+                ALLOWLIST_PAYMASTER_ADDRESS,
+                defaultAbiCoder.encode(["uint48", "uint48"], [validUntil, 0]),
+                signature as NotPromise<BytesLike>,
+            ]);
+
             return paymasterAndData;
         }
 
+        // If the sender is not part of the list return nothing
         return "";
     }
 }
@@ -74,16 +104,20 @@ const main = async () => {
     try {
         const factoryAddress = factories[chain.chainId];
         console.log("Running on", chain.slug, "with factory", factoryAddress);
-        // Local signer
+
+        // Local Signer for demo purposes
         let localWallet = new LocalWalletNode({
             chain,
         });
+
         await localWallet.loadOrCreate({
             strategy: "mnemonic",
             encryption: false,
         });
+
         const personalWalletAddress = await localWallet.getAddress();
-        console.log("Local signer addr:", personalWalletAddress);
+
+        console.log("Local Signer Address:", personalWalletAddress);
 
         // Create the AA provider
         const config: SmartWalletConfig = {
@@ -91,10 +125,10 @@ const main = async () => {
             gasless: true,
             factoryAddress,
             thirdwebApiKey,
-            paymasterAPI: new AllowlistPaymaster(allowList),
+            paymasterAPI: new AllowlistPaymaster(allowList), // The Custom Paymaster API
         };
 
-        // connect the smart wallet
+        // Connect the smart wallet
         const smartWallet = new SmartWallet(config);
         await smartWallet.connect({
             personalWallet: localWallet,
@@ -103,11 +137,11 @@ const main = async () => {
         const isWalletDeployed = await smartWallet.isDeployed();
         console.log(`Is smart wallet deployed?`, isWalletDeployed);
 
-        // now use the SDK normally
+        // Now use the SDK normally
         const sdk = await ThirdwebSDK.fromWallet(smartWallet, chain);
-        console.log("Smart Account addr:", await sdk.wallet.getAddress());
+        console.log("Smart Account Address:", await sdk.wallet.getAddress());
         console.log(
-            "native balance:",
+            "Native Token Balance:",
             (await sdk.wallet.balance()).displayValue
         );
 
