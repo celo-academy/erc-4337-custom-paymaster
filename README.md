@@ -1,6 +1,6 @@
 # Allowlist Paymaster using ThirdWeb SDK
 
-This is the implementation of Allowlist Paymaster, a paymaster tha allows a list of `UserOperation` senders to be sponsored by the paymaster
+This is the implementation of Allowlist Paymaster, a paymaster that allows a list of `UserOperation` senders to be sponsored by the paymaster
 
 ## Table of Contents
 
@@ -12,9 +12,13 @@ This is the implementation of Allowlist Paymaster, a paymaster tha allows a list
 
 ## Installation
 
+Clone the repo
+
 ```bash
 git clone https://github.com/celo-academy/erc-4337-custom-paymaster.git
 ```
+
+Install dependencies
 
 ```bash
 yarn install
@@ -38,7 +42,7 @@ npx hardhat run scripts/deploy.js --network alfajores
 -   Place the key in `.env` file
 -   Replace variables `PAYMASTER_OWNER` (this is the public key corresponding the private key of the paymaster owner), and `ALLOWLIST_PAYMASTER_ADDRESS` with the values you have
 
-To run the transaction script and perform a UserOperation use the following command
+To run the transaction script and perform a `UserOperation` use the following command
 
 ```bash
 yarn dev
