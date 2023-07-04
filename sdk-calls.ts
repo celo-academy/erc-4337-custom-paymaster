@@ -8,7 +8,10 @@ export const claimCeloToken = async (sdk: ThirdwebSDK) => {
         "0xdA82D492a49d08cF732A47Acf34efb51BE351dd6",
         "10"
     );
-    console.log("Claimed NFT Transaction Hash: ", tx.receipt.transactionHash);
+    console.log(
+        "Claimed Tokens Transaction Hash: ",
+        tx.receipt.transactionHash
+    );
     const tokenBalance = await contract.erc20.balance();
     console.log("Token Balance: ", tokenBalance.displayValue);
 };

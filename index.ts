@@ -12,6 +12,8 @@ import { LocalWalletNode } from "@thirdweb-dev/wallets/evm/wallets/local-wallet-
 import { CeloAlfajoresTestnet } from "@thirdweb-dev/chains";
 import { claimCeloToken } from "./sdk-calls";
 import { NotPromise, signUserOp } from "./aa-utils";
+import { ethers } from "ethers";
+import AllowlistPaymasterABI from "./abi.json";
 
 // Environment Variables
 config();
@@ -35,6 +37,24 @@ class AllowlistPaymaster extends PaymasterAPI {
     }
 
     /**
+     * Get the nonce for the UserOperation from Paymaster
+     */
+    async getSenderNonce(address: string) {
+        let provider = new ethers.providers.JsonRpcProvider(
+            CeloAlfajoresTestnet.rpc[1]
+        );
+
+        let AllowlistPaymaster = new ethers.Contract(
+            ALLOWLIST_PAYMASTER_ADDRESS,
+            AllowlistPaymasterABI,
+            provider
+        );
+
+        let nonce = await AllowlistPaymaster.senderNonce(address);
+        return nonce;
+    }
+
+    /**
      * This function should return the `paymasterAndData` component of the UserOperation which will be then validated by the on-chain paymaster contract
      *
      * Any arbitrary logic can be defined here ultimately the return value should be the value that will lead to successful validation on-chain by `validatePaymasterUserOp` function on the paymaster
@@ -44,7 +64,7 @@ class AllowlistPaymaster extends PaymasterAPI {
      * [PAYMASTER_ADDRESS (20 bytes)][VALID_UNTIL (uint48 but encoded so 32 bytes)][VALID_AFTER (uint48 but encoded so 32 bytes)][SIGNATURE (bytes)]
      */
     async getPaymasterAndData(
-        userOp: Partial<UserOperationStruct>
+        userOp: NotPromise<UserOperationStruct>
     ): Promise<string> {
         // Check if the UserOperation sender is part of the allowList
         if (this.allowlist.indexOf(userOp.sender as string) != -1) {
@@ -67,8 +87,7 @@ class AllowlistPaymaster extends PaymasterAPI {
                 await wallet.getSigner(), // The paymaster owner in the form of Signer
                 CeloAlfajoresTestnet.chainId,
                 ALLOWLIST_PAYMASTER_ADDRESS,
-                // TODO: get nonce from the paymaster
-                3, // senderNonce (this nonce is subjective to every paymaster and sender)
+                await this.getSenderNonce(userOp.sender), // senderNonce (this nonce is subjective to every paymaster and sender)
                 validUntil,
                 0 // validAfter - Timestamp after which the UserOperation sponsorship should be valid
             );
