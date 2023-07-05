@@ -18,14 +18,6 @@ export type NotPromise<T> = {
     [P in keyof T]: Exclude<T[P], Promise<any>>;
 };
 
-// DUMMY value for paymasterAndData
-export const DUMMY_PND =
-    "0x0101010101010101010101010101010101010101000000000000000000000000000000000000000000000000000001010101010100000000000000000000000000000000000000000000000000000000000000000101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101";
-
-// DUMMY value for signature field
-export const DUMMY_SIGNATURE =
-    "0x0101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101";
-
 /**
  * Pack the UserOperation
  *
@@ -58,8 +50,8 @@ export function packUserOp(op: NotPromise<UserOperationStruct>): string {
             op.preVerificationGas,
             op.maxFeePerGas,
             op.maxPriorityFeePerGas,
-            DUMMY_PND,
-            DUMMY_SIGNATURE,
+            op.paymasterAndData,
+            op.signature,
         ]
     );
 
