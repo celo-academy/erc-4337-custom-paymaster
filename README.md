@@ -7,8 +7,8 @@ This is the implementation of Allowlist Paymaster, a paymaster that allows a lis
 -   [Installation](#installation)
 -   [Usage](#usage)
 -   [Features](#features)
--   [Contributing](#contributing)
--   [License](#license)
+-   [Doubt](#doubt)
+
 
 ## Installation
 
@@ -60,6 +60,6 @@ npx hardhat verify [PAYMASTER_ADDRESS] [ENTRYPOINT_ADDRESS] [PAYMASTER_OWNER_ADD
 
 -   Customize the `allowList` in `index.js` to allow sponsorship of smart accounts by the paymaster
 
-### Doubts?
+## Doubts?
 
 Join Office Hours in [Celo](https://discord.com/invite/celo) discord
