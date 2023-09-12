@@ -130,8 +130,8 @@ const main = async () => {
         });
 
         await localWallet.loadOrCreate({
-            strategy: "mnemonic",
-            encryption: false,
+            strategy: "encryptedJson",
+            password: "password",
         });
 
         const personalWalletAddress = await localWallet.getAddress();
@@ -143,8 +143,8 @@ const main = async () => {
             chain,
             gasless: true,
             factoryAddress,
-            thirdwebApiKey,
-            paymasterAPI: new AllowlistPaymaster(allowList), // The Custom Paymaster API
+            clientId: "pk-0daa2929bd2c98c87cbe62029fd073e2422e77dac653670c",
+            // paymasterAPI: new AllowlistPaymaster(allowList), // The Custom Paymaster API
         };
 
         // Connect the smart wallet
